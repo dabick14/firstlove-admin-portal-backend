@@ -6,13 +6,14 @@ type Member {
   phoneNumber: String
   whatsAppNumber: String
   dob: TimeGraph @relation(name: "WAS_BORN_ON", direction: "OUT")
-  leader: [Leader] @relation(name: "IS_A", direction: "OUT")
+  //leader: [Leader] @relation(name: "IS_A", direction: "OUT")
   ministry: [Sonta] @relation(name: "BELONGS_TO", direction: "OUT")
   occupation: [Occupation] @relation(name: "HAS_OCCUPATION", direction: "OUT")
   bacenta: [Bacenta] @relation(name: "BELONGS_TO", direction: "OUT")
-  center: Centre @relation(name: "BELONGS_TO", direction: "OUT")
+  //center: Centre @relation(name: "BELONGS_TO", direction: "OUT")
   gender: Gender @relation(name: "HAS_GENDER", direction: "OUT")
   maritalStatus: MaritalStatus @relation(name: "IS", direction: "OUT")
+  
 }
 
 type Gender {
@@ -26,7 +27,8 @@ type MaritalStatus {
 }
 
 type Leader {
-  rank: String
+  //Changed from Rank to Leader Type
+  leaderType: String
   title: String
   members: [Member] @relation(name: "IS_A", direction: "OUT")
   appointmentDate: TimeGraph @relation(name: "APPOINTED_ON", direction: "OUT")

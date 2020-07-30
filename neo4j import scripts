@@ -1,4 +1,9 @@
-//Town, Community and Centre data import script
+//Delete all Entries
+match (n)
+detach delete n
+
+// Q1 Town, Community and Centre data import script
+
 LOAD CSV WITH HEADERS FROM "file:///Centres-Table.csv" as line
 MERGE(t:Town {name: line.Town})
 SET 
@@ -12,8 +17,8 @@ MERGE(cen: Centre{name:line.centreName})
     cen.centreCode = line.centreCode
 MERGE(C)-[:HAS_CENTRE]->(cen)
 
+// Q2 firstlove membership data Import script
 
-//firstlove membership data Import script
 LOAD CSV WITH HEADERS FROM "file:///Members.csv" as line
 CREATE(m:Member {memberId: apoc.create.uuid()})
 	SET 
@@ -21,7 +26,7 @@ CREATE(m:Member {memberId: apoc.create.uuid()})
     m.lastName = line.lastName,
     m.email = line.email,
     m.phoneNumber = line.phoneNumber,
-    m.centre = line.centreCode,
+    m.centreCode = line.centreCode,
     m.whatsAppNumber = line.whatsappNumber
  
 
@@ -31,45 +36,47 @@ MERGE(m)-[:HAS_GENDER]->(g)
 MERGE(ms: MaritalStatus {status: line.maritalStatus})
 MERGE(m)-[:IS]->(ms)
 
-with line WHERE line.occupation is not null
-MERGE(O:Occupation {occupation: line.occupation})
-MERGE(m)-[:HAS_OCCUPATION]->(O)
-
-with line
-MERGE(d: Date{date:line.dob})
+MERGE(d: DateofBirth{date:line.dob})
 MERGE(m)-[:WAS_BORN_ON]->(d)
 
-with line WHERE line.Rank is not null
-MERGE(l: Leader{rank: line.Rank})
-MERGE(m)-[:IS_A]->(l)
-
-with line
 MERGE(b:Bacenta {name:line.bacenta})
 MERGE(m)-[:BELONGS_TO]->(b)
 
-WITH line
-MATCH(cen:Centre {centreCode: line.centreCode}),(m: Member{centre: cen.centreCode})
-WITH cen, m, line
-MERGE(m)-[:BELONGS_TO]->(cen)
+with line,m WHERE line.occupation is not null
+MERGE(O:Occupation {occupation: line.occupation})
+MERGE(m)-[:HAS_OCCUPATION]->(O)
+
+//with line WHERE line.title is not null
+//MERGE(l: Leader{title: line.title})
+//MERGE(m)-[:IS_A]->(l)
 
 with line, m  WHERE line.ministry is not null
 MERGE(S: Sonta {name:line.ministry})
+MERGE(m)-[:BELONGS_TO]->(S)
 
-with line, m
-MERGE(m)-[:BELONGS_TO]->(S);
+//MATCH(m:Member),(c:Centre)
+//where m.centreCode = c.centreCode
+//with m, c
+//MERGE(m)-[:BELONGS_TO]->(c)
+//return m
 
-MATCH(m:Member),(c:Centre)
-where m.centre = c.centreCode
-with m, c
-MERGE(m)-[:BELONGS_TO]->(c)
-return m
+// Q3 Centre Leader Relationships
+LOAD CSV WITH HEADERS FROM "file:///Centres-Table.csv" as line
+MATCH (m:Member {firstName: line.LeaderFirstName, lastName: line.LeaderLastName}), (c:Centre {centreCode:line.centreCode})
+CREATE (m)-[:LEADS]->(c)
 
+//Q4 Community Leadership relationships
+LOAD CSV WITH HEADERS FROM "file:///Communities.csv" as line
+MATCH (m:Member {firstName: line.LeaderFirstName, lastName: line.LeaderLastName}), (c:Community {name:line.Name})
+CREATE (m)-[:LEADS]->(c)
 
-// Count Members within each centre
-MATCH(m:Member)--(c:Centre)
-RETURN c.name AS CENTRE, COUNT(m) AS MEMBERS
+//Q5 Bacenta Leaders relationships
+LOAD CSV WITH HEADERS FROM "file:///Bacenta-Table.csv" as line
+MATCH (m:Member {firstName: line.bacentaLeaderFirstName, lastName: line.bacentaLeaderLastName}), (b:Bacenta {name:line.bacentaName}),(c:Centre {centreCode: line.centreCode})
+CREATE (m)-[:LEADS]->(b)
+CREATE (b)-[:BELONGS_TO]->(c)
 
-
-//Delete all Entries
-match (n)
-detach delete n
+// Q6 Sonta Leader Relationships
+LOAD CSV WITH HEADERS FROM "file:///Sonta-Table.csv" as line
+MATCH (m:Member {firstName: line.LeaderFirstName, lastName: line.LeaderLastName}), (s:Sonta {name:line.Ministry})
+CREATE (m)-[:LEADS]->(s)
